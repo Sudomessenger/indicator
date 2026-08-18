@@ -96,6 +96,7 @@ function readSudoUserPreview() {
     authDate: readAuthDate(),
     startParam: readStartParam(),
     platform: readPlatform(),
+    premium: Boolean(user.premium || user.is_premium || user.isPremium),
     verified: false
   };
 }
@@ -147,6 +148,11 @@ function applyProfile(profile) {
   }
 
   publishProfile(merged);
+
+  if (merged.mining) {
+    window.__SUDO_MINING__ = merged.mining;
+    window.dispatchEvent(new CustomEvent("sudo-mining", { detail: merged.mining }));
+  }
 }
 
 async function loadVerifiedProfile() {
@@ -156,7 +162,10 @@ async function loadVerifiedProfile() {
   const res = await fetch("/api/session", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ initData })
+    body: JSON.stringify({
+      initData,
+      platform: readPlatform()
+    })
   });
 
   if (!res.ok) return null;

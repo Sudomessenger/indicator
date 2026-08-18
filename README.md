@@ -1,6 +1,8 @@
 # Mining Weight Indicator
 
-Sudo mini app for mining weight status. Verifies signed `initData` on the backend and shows the live Sudo user name, username, and avatar.
+Sudo mini app that scores **Proof of Useful Participation** from a verified WebApp session.
+
+The gauge is Effective User Weight (`UBW × SybilGate`) on a 0.1–1.0 scale. Filter cards show live sub-scores from the economic design paper, not dummy design weights.
 
 ## Local
 
@@ -8,8 +10,21 @@ Sudo mini app for mining weight status. Verifies signed `initData` on the backen
 cp .env.example .env
 # set SUDO_BOT_TOKEN=botId:secret
 npm install
+npm test
 npm run dev
 ```
+
+Open the mini app from the Sudo bot chat. A browser tab has no signed `initData`, so it can only show a preview score.
+
+## Scoring
+
+`POST /api/session` verifies `initData`, calls Bot API `getMe`, records a visit, then returns:
+
+- `UBW = 0.20T + 0.12P + 0.12PN + 0.36W + 0.10R + 0.10C`
+- `EUW = UBW × SybilGate`
+- workpower `EUW / 100`
+
+Premium tenure, swap volume, referral farms, and community allocation need protocol feeds that the Bot API does not expose. Those components stay at honest partial/neutral values until those feeds exist. Invalid or circular Web3 activity still scores zero via the validity gate.
 
 ## Production
 

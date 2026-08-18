@@ -50,6 +50,13 @@ export function parseVerifiedUser(initData, botToken, maxAgeSec = 86400) {
 
   const user = JSON.parse(result.data.user || "{}");
   const photos = extractPhotoFields(user);
+  const premiumUntil = Number(user.premium_until || user.premiumUntil || 0);
+  const premium = Boolean(
+    user.premium ||
+      user.is_premium ||
+      user.isPremium ||
+      (Number.isFinite(premiumUntil) && premiumUntil > Date.now() / 1000)
+  );
 
   return {
     userId: String(user.user_id || user.id || ""),
@@ -61,7 +68,10 @@ export function parseVerifiedUser(initData, botToken, maxAgeSec = 86400) {
     photoUrl: photos.photoUrl,
     photoThumb: photos.photoThumb,
     authDate: Number(result.data.auth_date),
-    startParam: result.data.start_param || null,
+    startParam: result.data.start_param || result.data.startParam || null,
+    platform: result.data.platform || "",
+    premium,
+    premiumUntil: Number.isFinite(premiumUntil) && premiumUntil > 0 ? premiumUntil : null,
     verified: true
   };
 }

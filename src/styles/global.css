@@ -486,6 +486,10 @@ small {
   white-space: nowrap;
 }
 
+.filter-detail-copy small + small {
+  color: #8a929c;
+}
+
 .filter-detail-list li strong {
   flex: 0 0 auto;
   color: #1f2733;

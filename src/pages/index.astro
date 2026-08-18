@@ -1,90 +1,16 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import { FILTER_SCHEMA } from "../lib/miningScore.js";
 
 const shortcuts = [
-  { label: "Loads", icon: "◉", note: "24 tracked" },
-  { label: "Crusher", icon: "⌁", note: "2 active" },
-  { label: "Inventory", icon: "◫", note: "3 alerts" },
-  { label: "Dispatch", icon: "⌂", note: "5 routes" }
+  { id: "Trust", label: "Trust", icon: "◉" },
+  { id: "Own Premium", label: "Premium", icon: "⌁" },
+  { id: "Web3 utility", label: "Web3", icon: "◫" },
+  { id: "Consistency", label: "Consistency", icon: "⌂" }
 ];
 
-const filterChips = [
-  "Trust",
-  "Own Premium",
-  "Premium network",
-  "Web3 utility",
-  "Mature referrals",
-  "Consistency"
-];
-
-const filterDetails = {
-  Trust: [
-    "15% account age",
-    "20% device",
-    "15% human confidence",
-    "15% wallet reputation",
-    "15% behaviour",
-    "10% successful record",
-    "10% spam-free"
-  ],
-  "Own Premium": [
-    "55% active status",
-    "20% tenure",
-    "15% renewals",
-    "10% feature use"
-  ],
-  "Premium network": [
-    "35% unique Premium peers",
-    "30% Premium groups",
-    "15% Premium channels",
-    "10% quality",
-    "10% diversity"
-  ],
-  "Web3 utility": [
-    "15% frequency",
-    "15% diversity",
-    "15% value",
-    "15% recency",
-    "15% uniqueness",
-    "15% settlement",
-    "10% importance"
-  ],
-  "Mature referrals": [
-    "30% uniqueness",
-    "25% maturity",
-    "20% activity",
-    "15% trust",
-    "10% diversity"
-  ],
-  Consistency: [
-    "25% active days",
-    "20% regularity",
-    "15% chat",
-    "15% groups",
-    "10% content",
-    "10% Web3 regularity",
-    "5% spam-free"
-  ]
-};
-
-const parseRecommendation = (item) => {
-  const match = item.match(/^(\d+%)(.*)$/);
-
-  if (!match) {
-    return { percent: "", label: capitalizeLabel(item) };
-  }
-
-  return {
-    percent: match[1],
-    label: capitalizeLabel(match[2].replace(/^[\s;]+/, "").trim())
-  };
-};
-
-const capitalizeLabel = (text) => {
-  const value = String(text || "").trim();
-  if (!value) return "";
-  return value.charAt(0).toUpperCase() + value.slice(1);
-};
+const filterChips = Object.keys(FILTER_SCHEMA);
+const trustParts = FILTER_SCHEMA.Trust;
 
 const gaugeCenter = { x: 120, y: 126 };
 const gaugeStartAngle = 160;
@@ -172,7 +98,7 @@ const gaugeTicks = Array.from({ length: 46 }, (_, index) => {
           <div class="section-header">
             <div>
               <h2>Indicator</h2>
-              <p class="section-caption">Live mining weight status</p>
+              <p class="section-caption" data-mining-caption>Proof of useful participation</p>
             </div>
           </div>
 
@@ -201,7 +127,7 @@ const gaugeTicks = Array.from({ length: 46 }, (_, index) => {
               </div>
             </div>
             <div class="gauge-copy">
-              <strong data-sales-value>0.84</strong>
+              <strong data-sales-value>0.10</strong>
               <p>Mining Weight</p>
             </div>
           </div>
@@ -211,17 +137,17 @@ const gaugeTicks = Array.from({ length: 46 }, (_, index) => {
         <section class="mini-section">
           <div class="section-header">
             <div>
-              <h2>Quick actions</h2>
-              <p class="section-caption">Mining operations shortcuts</p>
+              <h2>User weight</h2>
+              <p class="section-caption">Live scores from the six-component UBW</p>
             </div>
           </div>
 
-          <section class="shortcut-grid" aria-label="Quick actions">
+          <section class="shortcut-grid" aria-label="User weight">
           {shortcuts.map((item) => (
-            <button class="shortcut-card" type="button" data-shortcut={item.label}>
+            <button class="shortcut-card" type="button" data-shortcut={item.id}>
               <span class="shortcut-icon" aria-hidden="true">{item.icon}</span>
               <span>{item.label}</span>
-              <small>{item.note}</small>
+              <small data-shortcut-note>—</small>
             </button>
           ))}
           </section>
@@ -231,7 +157,7 @@ const gaugeTicks = Array.from({ length: 46 }, (_, index) => {
           <div class="section-header">
             <div>
               <h2>Parameter recommendation</h2>
-              <p class="section-caption">Selected filter breakdown</p>
+              <p class="section-caption">Live sub-scores · Appendix A weights</p>
             </div>
           </div>
 
@@ -250,18 +176,15 @@ const gaugeTicks = Array.from({ length: 46 }, (_, index) => {
           <div class="filter-detail" data-filter-detail>
             <h3 data-filter-title>Trust</h3>
             <ul class="filter-detail-list" data-filter-list>
-              {filterDetails.Trust.map((item, index) => {
-                const parsed = parseRecommendation(item);
-
-                return (
-                  <li style={`--card-tint: var(--detail-card-${(index % 6) + 1});`}>
-                    <div class="filter-detail-copy">
-                      <span>{parsed.label}</span>
-                    </div>
-                    <strong>{parsed.percent}</strong>
-                  </li>
-                );
-              })}
+              {trustParts.map((item, index) => (
+                <li style={`--card-tint: var(--detail-card-${(index % 6) + 1});`}>
+                  <div class="filter-detail-copy">
+                    <span>{item.label}</span>
+                    <small>Weight {Math.round(item.weight * 100)}%</small>
+                  </div>
+                  <strong>—</strong>
+                </li>
+              ))}
             </ul>
           </div>
         </section>
@@ -270,172 +193,6 @@ const gaugeTicks = Array.from({ length: 46 }, (_, index) => {
     </section>
   </main>
 
-  <script define:vars={{ filterDetails }}>
-    const detailCardColors = [
-      "rgba(255, 244, 232, 0.96)",
-      "rgba(239, 247, 255, 0.96)",
-      "rgba(241, 252, 244, 0.96)",
-      "rgba(247, 241, 255, 0.96)",
-      "rgba(255, 246, 241, 0.96)",
-      "rgba(242, 248, 239, 0.96)"
-    ];
-
-    const dashboardStates = {
-      Today: {
-        sales: 0.84,
-        progress: 72,
-      },
-      Weekly: {
-        sales: 0.67,
-        progress: 81
-      },
-      Monthly: {
-        sales: 0.93,
-        progress: 88
-      }
-    };
-
-    const formatWeight = (value) => {
-      const normalized = Math.min(1, Math.max(0.1, value));
-      return normalized.toFixed(2);
-    };
-
-    const salesValue = document.querySelector("[data-sales-value]");
-    const gaugeArc = document.querySelector(".gauge__arc");
-    const gaugeNeedle = document.querySelector("[data-gauge-needle]");
-    const filterTitle = document.querySelector("[data-filter-title]");
-    const filterList = document.querySelector("[data-filter-list]");
-
-    let activePeriod = "Today";
-    let needleTarget = 0;
-
-    const setNeedleRotation = (progress) => {
-      needleTarget = -90 + (180 * progress) / 100;
-    };
-
-    let animationFrame = null;
-    const animateNeedle = () => {
-      if (gaugeNeedle) {
-        const wobble = Math.sin(Date.now() / 320) * 3.5;
-        gaugeNeedle.style.transform = `translateX(-50%) rotate(${needleTarget + wobble}deg)`;
-      }
-
-      animationFrame = window.requestAnimationFrame(animateNeedle);
-    };
-
-    const renderDashboard = (period) => {
-      const next = dashboardStates[period];
-      if (!next) return;
-
-      activePeriod = period;
-      salesValue.textContent = formatWeight(next.sales);
-      gaugeArc.style.setProperty("--progress", `${next.progress}%`);
-      setNeedleRotation(next.progress);
-    };
-
-    const capitalizeLabel = (text) => {
-      const value = String(text || "").trim();
-      if (!value) return "";
-      return value.charAt(0).toUpperCase() + value.slice(1);
-    };
-
-    const shortWallet = (wallet) => {
-      if (!wallet) return "";
-      if (wallet.length < 12) return wallet;
-      return `${wallet.slice(0, 6)}…${wallet.slice(-4)}`;
-    };
-
-    const formatAuthDate = (ts) => {
-      const date = new Date(Number(ts) * 1000);
-      if (Number.isNaN(date.getTime())) return "";
-      return date.toLocaleDateString(undefined, {
-        day: "numeric",
-        month: "short",
-        year: "numeric"
-      });
-    };
-
-    const realValueForLabel = (label, profile) => {
-      if (!profile) return "";
-      const key = String(label || "").toLowerCase();
-
-      if (key.includes("account age") || key.includes("recency") || key.includes("tenure")) {
-        return profile.authDate ? formatAuthDate(profile.authDate) : "";
-      }
-      if (key.includes("device") || key.includes("platform")) {
-        return profile.platform || "";
-      }
-      if (key.includes("human") || key.includes("trust")) {
-        return profile.verified ? "Verified session" : "";
-      }
-      if (key.includes("wallet")) {
-        return shortWallet(profile.wallet);
-      }
-      if (key.includes("behaviour") || key.includes("behavior") || key.includes("chat") || key.includes("content")) {
-        return profile.bio || profile.displayName || "";
-      }
-      if (key.includes("successful") || key.includes("username") || key.includes("unique")) {
-        return profile.username ? `@${profile.username}` : "";
-      }
-      if (key.includes("spam")) {
-        return profile.userId ? `ID ${profile.userId}` : "";
-      }
-      if (key.includes("active status") || key.includes("feature use") || key.includes("importance")) {
-        return profile.displayName || "";
-      }
-      if (key.includes("start")) {
-        return profile.startParam || "";
-      }
-      return "";
-    };
-
-    let activeFilter = "Trust";
-
-    const renderFilterDetails = (name) => {
-      const items = filterDetails[name];
-      if (!items || !filterTitle || !filterList) return;
-
-      activeFilter = name;
-      const profile = window.__SUDO_PROFILE__ || null;
-      filterTitle.textContent = name;
-      filterList.innerHTML = items
-        .map((item, index) => {
-          const match = item.match(/^(\d+%)(.*)$/);
-          const percent = match ? match[1] : "";
-          const label = capitalizeLabel(match ? match[2].replace(/^[\s;]+/, "").trim() : item);
-          const realValue = realValueForLabel(label, profile);
-          const realLine = realValue ? `<small>${realValue}</small>` : "";
-
-          return `
-            <li style="--card-tint: ${detailCardColors[index % detailCardColors.length]}">
-              <div class="filter-detail-copy">
-                <span>${label}</span>
-                ${realLine}
-              </div>
-              <strong>${percent}</strong>
-            </li>
-          `;
-        })
-        .join("");
-    };
-
-    document.querySelectorAll(".filter-chip").forEach((button) => {
-      button.addEventListener("click", () => {
-        document.querySelectorAll(".filter-chip").forEach((chip) => {
-          chip.classList.toggle("is-selected", chip === button);
-        });
-
-        renderFilterDetails(button.dataset.filter);
-      });
-    });
-
-    window.addEventListener("sudo-profile", () => {
-      renderFilterDetails(activeFilter);
-    });
-
-    renderDashboard(activePeriod);
-    renderFilterDetails("Trust");
-    animateNeedle();
-  </script>
+  <script src="../scripts/miningUi.js"></script>
   <script src="../scripts/sudoUser.js"></script>
 </BaseLayout>
