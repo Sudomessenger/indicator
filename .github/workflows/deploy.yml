@@ -11,10 +11,13 @@ jobs:
     steps:
       - name: Deploy to host
         uses: appleboy/ssh-action@v1.2.2
+        env:
+          SUDO_BOT_TOKEN: ${{ secrets.SUDO_BOT_TOKEN }}
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
+          envs: SUDO_BOT_TOKEN
           script: |
             set -euo pipefail
             mkdir -p /opt/indicator
@@ -25,6 +28,10 @@ jobs:
             git fetch origin main
             git checkout main
             git reset --hard origin/main
+            if [ -n "${SUDO_BOT_TOKEN:-}" ]; then
+              printf 'SUDO_BOT_TOKEN=%s\n' "$SUDO_BOT_TOKEN" > /opt/indicator/.env
+              chmod 600 /opt/indicator/.env
+            fi
             if command -v npm >/dev/null 2>&1; then
               npm ci
               npm run build
