@@ -1,0 +1,364 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const shortcuts = [
+  { label: "Loads", icon: "◉", note: "24 tracked" },
+  { label: "Crusher", icon: "⌁", note: "2 active" },
+  { label: "Inventory", icon: "◫", note: "3 alerts" },
+  { label: "Dispatch", icon: "⌂", note: "5 routes" }
+];
+
+const filterChips = [
+  "Trust",
+  "Own Premium",
+  "Premium network",
+  "Web3 utility",
+  "Mature referrals",
+  "Consistency"
+];
+
+const filterDetails = {
+  Trust: [
+    "15% account age",
+    "20% device",
+    "15% human confidence",
+    "15% wallet reputation",
+    "15% behaviour",
+    "10% successful record",
+    "10% spam-free"
+  ],
+  "Own Premium": [
+    "55% active status",
+    "20% tenure",
+    "15% renewals",
+    "10% feature use"
+  ],
+  "Premium network": [
+    "35% unique Premium peers",
+    "30% Premium groups",
+    "15% Premium channels",
+    "10% quality",
+    "10% diversity"
+  ],
+  "Web3 utility": [
+    "15% frequency",
+    "15% diversity",
+    "15% value",
+    "15% recency",
+    "15% uniqueness",
+    "15% settlement",
+    "10% importance"
+  ],
+  "Mature referrals": [
+    "30% uniqueness",
+    "25% maturity",
+    "20% activity",
+    "15% trust",
+    "10% diversity"
+  ],
+  Consistency: [
+    "25% active days",
+    "20% regularity",
+    "15% chat",
+    "15% groups",
+    "10% content",
+    "10% Web3 regularity",
+    "5% spam-free"
+  ]
+};
+
+const parseRecommendation = (item) => {
+  const match = item.match(/^(\d+%)(.*)$/);
+
+  if (!match) {
+    return { percent: "", label: item };
+  }
+
+  return {
+    percent: match[1],
+    label: match[2].replace(/^[\s;]+/, "").trim()
+  };
+};
+
+const gaugeCenter = { x: 120, y: 126 };
+const gaugeStartAngle = 160;
+const gaugeEndAngle = 20;
+const gaugeSpan = gaugeStartAngle - gaugeEndAngle;
+
+const polarPoint = (angle, radius) => {
+  const radians = (angle * Math.PI) / 180;
+
+  return {
+    x: gaugeCenter.x + radius * Math.cos(radians),
+    y: gaugeCenter.y - radius * Math.sin(radians)
+  };
+};
+
+const meterLabels = Array.from({ length: 10 }, (_, index) => {
+  const value = (index + 1) / 10;
+  const angle = gaugeStartAngle - (index * gaugeSpan) / 9;
+  const point = polarPoint(angle, 78);
+
+  return {
+    label: value.toFixed(1),
+    x: point.x,
+    y: point.y
+  };
+});
+
+const gaugeTicks = Array.from({ length: 46 }, (_, index) => {
+  const angle = gaugeStartAngle - (index * gaugeSpan) / 45;
+  const major = index % 5 === 0;
+  const outer = polarPoint(angle, 104);
+  const inner = polarPoint(angle, major ? 89 : 95);
+
+  return {
+    x1: outer.x,
+    y1: outer.y,
+    x2: inner.x,
+    y2: inner.y,
+    major
+  };
+});
+---
+
+<BaseLayout title="Mining Weight Indicator">
+  <main class="app-shell">
+    <section class="phone-frame">
+      <div class="phone-screen">
+        <header class="hero">
+          <div class="hero__profile">
+            <div class="avatar">
+              <img
+                data-avatar-img
+                alt=""
+                width="48"
+                height="48"
+                referrerpolicy="no-referrer"
+                hidden
+              />
+              <span class="avatar__initials" data-avatar-initials>SU</span>
+            </div>
+            <div>
+              <p class="eyebrow" data-username>@username</p>
+              <h1 data-display-name>Sudo user</h1>
+            </div>
+          </div>
+
+          <div class="hero__actions">
+            <button class="icon-button" aria-label="Open shortcuts">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <rect x="5" y="5" width="5" height="5" rx="1.5" stroke="currentColor" stroke-width="1.7"/>
+                <rect x="14" y="5" width="5" height="5" rx="1.5" stroke="currentColor" stroke-width="1.7"/>
+                <rect x="5" y="14" width="5" height="5" rx="1.5" stroke="currentColor" stroke-width="1.7"/>
+                <rect x="14" y="14" width="5" height="5" rx="1.5" stroke="currentColor" stroke-width="1.7"/>
+              </svg>
+            </button>
+            <button class="icon-button" aria-label="Open activity">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M7 12.5L10 9.5L13 14L17 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        </header>
+
+        <section class="card summary-card">
+          <div class="section-header">
+            <div>
+              <h2>Indicator</h2>
+              <p class="section-caption">Live mining weight status</p>
+            </div>
+          </div>
+
+          <div class="gauge-wrap">
+            <div class="gauge" aria-hidden="true">
+              <div class="gauge__arc"></div>
+              <svg class="gauge__scale-svg" viewBox="0 0 240 132" aria-hidden="true">
+                {gaugeTicks.map((tick) => (
+                  <line
+                    class:list={["gauge__tick-line", tick.major && "is-major"]}
+                    x1={tick.x1}
+                    y1={tick.y1}
+                    x2={tick.x2}
+                    y2={tick.y2}
+                  />
+                ))}
+                {meterLabels.map((item) => (
+                  <text class="gauge__scale-text" x={item.x} y={item.y} text-anchor="middle">
+                    {item.label}
+                  </text>
+                ))}
+              </svg>
+              <div class="gauge__needle" data-gauge-needle>
+                <span class="gauge__needle-line"></span>
+                <span class="gauge__needle-cap"></span>
+              </div>
+            </div>
+            <div class="gauge-copy">
+              <strong data-sales-value>0.84</strong>
+              <p>Mining Weight</p>
+            </div>
+          </div>
+
+        </section>
+
+        <section class="mini-section">
+          <div class="section-header">
+            <div>
+              <h2>Quick actions</h2>
+              <p class="section-caption">Mining operations shortcuts</p>
+            </div>
+          </div>
+
+          <section class="shortcut-grid" aria-label="Quick actions">
+          {shortcuts.map((item) => (
+            <button class="shortcut-card" type="button" data-shortcut={item.label}>
+              <span class="shortcut-icon" aria-hidden="true">{item.icon}</span>
+              <span>{item.label}</span>
+              <small>{item.note}</small>
+            </button>
+          ))}
+          </section>
+        </section>
+
+        <section class="card transactions-card">
+          <div class="section-header">
+            <div>
+              <h2>Parameter recommendation</h2>
+              <p class="section-caption">Selected filter breakdown</p>
+            </div>
+          </div>
+
+          <div class="filter-row" role="tablist" aria-label="Activity filters">
+            {filterChips.map((item, index) => (
+              <button
+                class:list={["filter-chip", index === 0 && "is-selected"]}
+                type="button"
+                data-filter={item}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+
+          <div class="filter-detail" data-filter-detail>
+            <h3 data-filter-title>Trust</h3>
+            <ul class="filter-detail-list" data-filter-list>
+              {filterDetails.Trust.map((item, index) => {
+                const parsed = parseRecommendation(item);
+
+                return (
+                  <li style={`--card-tint: var(--detail-card-${(index % 6) + 1});`}>
+                    <span>{parsed.label}</span>
+                    <strong>{parsed.percent}</strong>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        </section>
+
+      </div>
+    </section>
+  </main>
+
+  <script define:vars={{ filterDetails }}>
+    const detailCardColors = [
+      "rgba(255, 244, 232, 0.96)",
+      "rgba(239, 247, 255, 0.96)",
+      "rgba(241, 252, 244, 0.96)",
+      "rgba(247, 241, 255, 0.96)",
+      "rgba(255, 246, 241, 0.96)",
+      "rgba(242, 248, 239, 0.96)"
+    ];
+
+    const dashboardStates = {
+      Today: {
+        sales: 0.84,
+        progress: 72,
+      },
+      Weekly: {
+        sales: 0.67,
+        progress: 81
+      },
+      Monthly: {
+        sales: 0.93,
+        progress: 88
+      }
+    };
+
+    const formatWeight = (value) => {
+      const normalized = Math.min(1, Math.max(0.1, value));
+      return normalized.toFixed(2);
+    };
+
+    const salesValue = document.querySelector("[data-sales-value]");
+    const gaugeArc = document.querySelector(".gauge__arc");
+    const gaugeNeedle = document.querySelector("[data-gauge-needle]");
+    const filterTitle = document.querySelector("[data-filter-title]");
+    const filterList = document.querySelector("[data-filter-list]");
+
+    let activePeriod = "Today";
+    let needleTarget = 0;
+
+    const setNeedleRotation = (progress) => {
+      needleTarget = -90 + (180 * progress) / 100;
+    };
+
+    let animationFrame = null;
+    const animateNeedle = () => {
+      if (gaugeNeedle) {
+        const wobble = Math.sin(Date.now() / 320) * 3.5;
+        gaugeNeedle.style.transform = `translateX(-50%) rotate(${needleTarget + wobble}deg)`;
+      }
+
+      animationFrame = window.requestAnimationFrame(animateNeedle);
+    };
+
+    const renderDashboard = (period) => {
+      const next = dashboardStates[period];
+      if (!next) return;
+
+      activePeriod = period;
+      salesValue.textContent = formatWeight(next.sales);
+      gaugeArc.style.setProperty("--progress", `${next.progress}%`);
+      setNeedleRotation(next.progress);
+    };
+
+    const renderFilterDetails = (name) => {
+      const items = filterDetails[name];
+      if (!items || !filterTitle || !filterList) return;
+
+      filterTitle.textContent = name;
+      filterList.innerHTML = items
+        .map((item, index) => {
+          const match = item.match(/^(\d+%)(.*)$/);
+          const percent = match ? match[1] : "";
+          const label = match ? match[2].replace(/^[\\s;]+/, "").trim() : item;
+
+          return `
+            <li style="--card-tint: ${detailCardColors[index % detailCardColors.length]}">
+              <span>${label}</span>
+              <strong>${percent}</strong>
+            </li>
+          `;
+        })
+        .join("");
+    };
+
+    document.querySelectorAll(".filter-chip").forEach((button) => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll(".filter-chip").forEach((chip) => {
+          chip.classList.toggle("is-selected", chip === button);
+        });
+
+        renderFilterDetails(button.dataset.filter);
+      });
+    });
+
+    renderDashboard(activePeriod);
+    renderFilterDetails("Trust");
+    animateNeedle();
+  </script>
+  <script src="../scripts/sudoUser.js"></script>
+</BaseLayout>

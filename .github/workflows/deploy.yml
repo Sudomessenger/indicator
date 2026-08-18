@@ -1,0 +1,40 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to host
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+            mkdir -p /opt/indicator
+            if [ ! -d /opt/indicator/.git ]; then
+              git clone https://github.com/Sudomessenger/indicator.git /opt/indicator
+            fi
+            cd /opt/indicator
+            git fetch origin main
+            git checkout main
+            git reset --hard origin/main
+            if command -v npm >/dev/null 2>&1; then
+              npm ci
+              npm run build
+            else
+              echo "Node/npm is missing on the host"
+              exit 1
+            fi
+            cp deploy/indicator.service /etc/systemd/system/indicator.service
+            systemctl daemon-reload
+            systemctl enable indicator
+            systemctl restart indicator
+            systemctl --no-pager --full status indicator

@@ -1,0 +1,17 @@
+[Unit]
+Description=Sudo mining weight indicator mini app
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/indicator
+Environment=HOST=0.0.0.0
+Environment=PORT=4321
+EnvironmentFile=-/opt/indicator/.env
+ExecStart=/usr/bin/node dist/server/entry.mjs
+Restart=always
+RestartSec=3
+User=root
+
+[Install]
+WantedBy=multi-user.target
