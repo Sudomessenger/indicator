@@ -71,13 +71,19 @@ const parseRecommendation = (item) => {
   const match = item.match(/^(\d+%)(.*)$/);
 
   if (!match) {
-    return { percent: "", label: item };
+    return { percent: "", label: capitalizeLabel(item) };
   }
 
   return {
     percent: match[1],
-    label: match[2].replace(/^[\s;]+/, "").trim()
+    label: capitalizeLabel(match[2].replace(/^[\s;]+/, "").trim())
   };
+};
+
+const capitalizeLabel = (text) => {
+  const value = String(text || "").trim();
+  if (!value) return "";
+  return value.charAt(0).toUpperCase() + value.slice(1);
 };
 
 const gaugeCenter = { x: 120, y: 126 };
@@ -249,7 +255,9 @@ const gaugeTicks = Array.from({ length: 46 }, (_, index) => {
 
                 return (
                   <li style={`--card-tint: var(--detail-card-${(index % 6) + 1});`}>
-                    <span>{parsed.label}</span>
+                    <div class="filter-detail-copy">
+                      <span>{parsed.label}</span>
+                    </div>
                     <strong>{parsed.percent}</strong>
                   </li>
                 );
@@ -325,20 +333,85 @@ const gaugeTicks = Array.from({ length: 46 }, (_, index) => {
       setNeedleRotation(next.progress);
     };
 
+    const capitalizeLabel = (text) => {
+      const value = String(text || "").trim();
+      if (!value) return "";
+      return value.charAt(0).toUpperCase() + value.slice(1);
+    };
+
+    const shortWallet = (wallet) => {
+      if (!wallet) return "";
+      if (wallet.length < 12) return wallet;
+      return `${wallet.slice(0, 6)}…${wallet.slice(-4)}`;
+    };
+
+    const formatAuthDate = (ts) => {
+      const date = new Date(Number(ts) * 1000);
+      if (Number.isNaN(date.getTime())) return "";
+      return date.toLocaleDateString(undefined, {
+        day: "numeric",
+        month: "short",
+        year: "numeric"
+      });
+    };
+
+    const realValueForLabel = (label, profile) => {
+      if (!profile) return "";
+      const key = String(label || "").toLowerCase();
+
+      if (key.includes("account age") || key.includes("recency") || key.includes("tenure")) {
+        return profile.authDate ? formatAuthDate(profile.authDate) : "";
+      }
+      if (key.includes("device") || key.includes("platform")) {
+        return profile.platform || "";
+      }
+      if (key.includes("human") || key.includes("trust")) {
+        return profile.verified ? "Verified session" : "";
+      }
+      if (key.includes("wallet")) {
+        return shortWallet(profile.wallet);
+      }
+      if (key.includes("behaviour") || key.includes("behavior") || key.includes("chat") || key.includes("content")) {
+        return profile.bio || profile.displayName || "";
+      }
+      if (key.includes("successful") || key.includes("username") || key.includes("unique")) {
+        return profile.username ? `@${profile.username}` : "";
+      }
+      if (key.includes("spam")) {
+        return profile.userId ? `ID ${profile.userId}` : "";
+      }
+      if (key.includes("active status") || key.includes("feature use") || key.includes("importance")) {
+        return profile.displayName || "";
+      }
+      if (key.includes("start")) {
+        return profile.startParam || "";
+      }
+      return "";
+    };
+
+    let activeFilter = "Trust";
+
     const renderFilterDetails = (name) => {
       const items = filterDetails[name];
       if (!items || !filterTitle || !filterList) return;
 
+      activeFilter = name;
+      const profile = window.__SUDO_PROFILE__ || null;
       filterTitle.textContent = name;
       filterList.innerHTML = items
         .map((item, index) => {
           const match = item.match(/^(\d+%)(.*)$/);
           const percent = match ? match[1] : "";
-          const label = match ? match[2].replace(/^[\\s;]+/, "").trim() : item;
+          const label = capitalizeLabel(match ? match[2].replace(/^[\s;]+/, "").trim() : item);
+          const realValue = realValueForLabel(label, profile);
+          const realLine = realValue ? `<small>${realValue}</small>` : "";
 
           return `
             <li style="--card-tint: ${detailCardColors[index % detailCardColors.length]}">
-              <span>${label}</span>
+              <div class="filter-detail-copy">
+                <span>${label}</span>
+                ${realLine}
+              </div>
               <strong>${percent}</strong>
             </li>
           `;
@@ -354,6 +427,10 @@ const gaugeTicks = Array.from({ length: 46 }, (_, index) => {
 
         renderFilterDetails(button.dataset.filter);
       });
+    });
+
+    window.addEventListener("sudo-profile", () => {
+      renderFilterDetails(activeFilter);
     });
 
     renderDashboard(activePeriod);

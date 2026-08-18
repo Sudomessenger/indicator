@@ -40,6 +40,42 @@ function readHostPhoto() {
   return window.__SUDO_USER_PHOTO_DATA_URL__ || window.__SUDO_USER_PHOTO_URL__ || "";
 }
 
+function readPlatform() {
+  const hash = location.hash.replace(/^#/, "");
+  const params = new URLSearchParams(hash);
+  const raw =
+    window.Sudo?.WebApp?.platform ||
+    window.Telegram?.WebApp?.platform ||
+    params.get("sudoWebAppPlatform") ||
+    "";
+  const platform = String(raw).trim();
+  if (!platform) return "";
+  return platform.charAt(0).toUpperCase() + platform.slice(1);
+}
+
+function readStartParam() {
+  const unsafe =
+    window.Sudo?.WebApp?.initDataUnsafe ||
+    window.Telegram?.WebApp?.initDataUnsafe ||
+    {};
+  return unsafe.start_param || null;
+}
+
+function readAuthDate() {
+  const unsafe =
+    window.Sudo?.WebApp?.initDataUnsafe ||
+    window.Telegram?.WebApp?.initDataUnsafe ||
+    {};
+  const value = Number(unsafe.auth_date);
+  return Number.isFinite(value) && value > 0 ? value : null;
+}
+
+function publishProfile(profile) {
+  if (!profile) return;
+  window.__SUDO_PROFILE__ = profile;
+  window.dispatchEvent(new CustomEvent("sudo-profile", { detail: profile }));
+}
+
 function readSudoUserPreview() {
   const user = window.Sudo?.WebApp?.initDataUnsafe?.user;
   if (!user) return null;
@@ -52,9 +88,15 @@ function readSudoUserPreview() {
     userId: String(user.user_id || user.id || ""),
     username: user.username || "",
     displayName: user.display_name || user.first_name || user.username || "",
+    firstName: user.first_name || "",
+    bio: user.bio || "",
     wallet: String(user.wallet_address || "").toLowerCase(),
     photoUrl,
-    photoThumb
+    photoThumb,
+    authDate: readAuthDate(),
+    startParam: readStartParam(),
+    platform: readPlatform(),
+    verified: false
   };
 }
 
@@ -71,31 +113,40 @@ function initialsFrom(name) {
 function applyProfile(profile) {
   if (!profile) return;
 
+  const merged = {
+    platform: readPlatform(),
+    startParam: readStartParam(),
+    authDate: profile.authDate || readAuthDate(),
+    ...profile
+  };
+
   const usernameEl = document.querySelector("[data-username]");
   const nameEl = document.querySelector("[data-display-name]");
   const initialsEl = document.querySelector("[data-avatar-initials]");
   const imgEl = document.querySelector("[data-avatar-img]");
 
-  const username = profile.username ? `@${profile.username}` : "@user";
-  const displayName = profile.displayName || profile.username || "Sudo user";
+  const username = merged.username ? `@${merged.username}` : "@user";
+  const displayName = merged.displayName || merged.username || "Sudo user";
 
   if (usernameEl) usernameEl.textContent = username;
   if (nameEl) nameEl.textContent = displayName;
   if (initialsEl) initialsEl.textContent = initialsFrom(displayName);
 
-  const src = avatarSrc(profile.photoThumb || profile.photoUrl);
-  if (!imgEl || !src) return;
+  const src = avatarSrc(merged.photoThumb || merged.photoUrl);
+  if (imgEl && src) {
+    imgEl.onload = () => {
+      imgEl.hidden = false;
+      if (initialsEl) initialsEl.hidden = true;
+    };
+    imgEl.onerror = () => {
+      imgEl.hidden = true;
+      if (initialsEl) initialsEl.hidden = false;
+    };
+    imgEl.alt = displayName;
+    imgEl.src = src;
+  }
 
-  imgEl.onload = () => {
-    imgEl.hidden = false;
-    if (initialsEl) initialsEl.hidden = true;
-  };
-  imgEl.onerror = () => {
-    imgEl.hidden = true;
-    if (initialsEl) initialsEl.hidden = false;
-  };
-  imgEl.alt = displayName;
-  imgEl.src = src;
+  publishProfile(merged);
 }
 
 async function loadVerifiedProfile() {

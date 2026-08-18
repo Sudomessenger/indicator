@@ -55,10 +55,13 @@ export function parseVerifiedUser(initData, botToken, maxAgeSec = 86400) {
     userId: String(user.user_id || user.id || ""),
     username: user.username || "",
     displayName: user.display_name || user.first_name || user.username || "",
+    firstName: user.first_name || "",
+    bio: user.bio || "",
     wallet: String(user.wallet_address || "").toLowerCase(),
     photoUrl: photos.photoUrl,
     photoThumb: photos.photoThumb,
     authDate: Number(result.data.auth_date),
-    startParam: result.data.start_param || null
+    startParam: result.data.start_param || null,
+    verified: true
   };
 }

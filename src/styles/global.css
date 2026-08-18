@@ -466,8 +466,24 @@ small {
   font-size: 0.82rem;
 }
 
-.filter-detail-list li span {
+.filter-detail-copy {
   flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.filter-detail-list li span {
+  color: #1f2733;
+  font-weight: 700;
+}
+
+.filter-detail-copy small {
+  color: #7a828c;
+  font-size: 0.72rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .filter-detail-list li strong {
